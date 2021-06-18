@@ -109,6 +109,9 @@ func (cs ClientState) VerifyClientState(
 	proof []byte,
 	clientState exported.ClientState,
 ) error {
+	// NOTE: the proof height sequence is incremented by one due to the connection handshake verification ordering
+	height = clienttypes.NewHeight(height.GetRevisionNumber(), height.GetRevisionHeight()+1)
+
 	publicKey, sigData, timestamp, sequence, err := produceVerificationArgs(cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err
@@ -147,6 +150,9 @@ func (cs ClientState) VerifyClientConsensusState(
 	proof []byte,
 	consensusState exported.ConsensusState,
 ) error {
+	// NOTE: the proof height sequence is incremented by two due to the connection handshake verification ordering
+	height = clienttypes.NewHeight(height.GetRevisionNumber(), height.GetRevisionHeight()+2)
+
 	publicKey, sigData, timestamp, sequence, err := produceVerificationArgs(cdc, cs, height, prefix, proof)
 	if err != nil {
 		return err
@@ -435,7 +441,7 @@ func produceVerificationArgs(
 		return nil, nil, 0, 0, sdkerrors.Wrap(commitmenttypes.ErrInvalidPrefix, "prefix cannot be empty")
 	}
 
-	_, ok := prefix.(commitmenttypes.MerklePrefix)
+	_, ok := prefix.(*commitmenttypes.MerklePrefix)
 	if !ok {
 		return nil, nil, 0, 0, sdkerrors.Wrapf(commitmenttypes.ErrInvalidPrefix, "invalid prefix type %T, expected MerklePrefix", prefix)
 	}
